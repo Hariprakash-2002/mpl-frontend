@@ -1,0 +1,554 @@
+.stats-container {
+    background:
+    radial-gradient(circle at top left,
+    rgba(255, 196, 0, 0.08),
+    transparent 25%),
+
+    radial-gradient(circle at top right,
+    rgba(0, 132, 255, 0.12),
+    transparent 30%),
+
+    linear-gradient(
+    135deg,
+    #020817 0%,
+    #04102D 25%,
+    #071B4D 50%,
+    #04102D 75%,
+    #020817 100%
+    );
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding: 40px 24px;
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    color: #eef3ff;
+}
+
+.stats-heading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: #ffffff;
+    text-shadow: 0 0 10px rgba(255, 213, 79, 0.5);
+    text-align: center;
+}
+
+.stats-heading p {
+    margin: 0;
+    max-width: 860px;
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 1rem;
+}
+
+.highlight {
+    color: #FFD54F;
+    text-shadow: 0 0 10px rgba(255, 213, 79, 0.5);
+}
+
+.stats-heading h1 {
+    font-size: 55px;
+    text-transform: uppercase;
+    margin: 0;
+}
+
+/* Tabs Bar (Inherited styling from All-matches-dates) */
+.All-stats-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    background-color: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 12px 16px;
+    border-radius: 14px;
+    color: #ffffff;
+    width: min(100%, 1000px);
+}
+
+.tab-btn {
+    border-right: 1px solid #444;
+    padding: 12px 20px;
+    border-radius: 12px;
+    border: 1px solid #202020;
+    background-color: rgba(255, 255, 255, 0.08);
+    min-width: 130px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.tab-btn p,
+.tab-icon {
+    margin: 0;
+    font-weight: 600;
+}
+
+.tab-icon {
+    padding: 0 16px;
+}
+
+/* Individual tab color presets (Vibrant additions) */
+.tab-btn:hover,
+.active-tab {
+    background-color: rgba(255, 213, 79, 0.15);
+    border-color: #FFD54F;
+    color: #FFD54F;
+}
+
+.orange-accent-tab:hover,
+.orange-accent-tab.active-tab {
+    background-color: rgba(255, 118, 20, 0.15);
+    border-color: #FF7614;
+    color: #FF7614;
+}
+
+.purple-accent-tab:hover,
+.purple-accent-tab.active-tab {
+    background-color: rgba(162, 89, 255, 0.15);
+    border-color: #A259FF;
+    color: #A259FF;
+}
+
+.cyan-accent-tab:hover,
+.cyan-accent-tab.active-tab {
+    background-color: rgba(0, 229, 255, 0.15);
+    border-color: #00E5FF;
+    color: #00E5FF;
+}
+
+/* Subtitle Tag Section with Accent Borders */
+.stats-tag {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 10px;
+    color: #ffffff;
+    text-shadow: 0 0 10px rgba(255, 213, 79, 0.5);
+    width: min(100%, 1000px);
+    padding: 14px 18px;
+    background-color: rgba(255, 213, 79, 0.08);
+    border-radius: 14px;
+    border: 1px solid rgba(255, 213, 79, 0.2);
+    transition: all 0.3s ease;
+}
+
+.stats-tag.standings-border { border-color: rgba(255, 213, 79, 0.4); }
+.stats-tag.batting-border { border-color: rgba(255, 118, 20, 0.4); }
+.stats-tag.bowling-border { border-color: rgba(162, 89, 255, 0.4); }
+.stats-tag.records-border { border-color: rgba(0, 229, 255, 0.4); }
+
+/* Main Wrapper */
+.stats-content-wrapper {
+    width: min(100%, 1000px);
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+/* =========================================
+   TABLE STANDINGS (Leaderboard View) 
+   ========================================= */
+.table-responsive-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    border-radius: 22px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background-color: rgba(5, 11, 31, 0.75);
+    backdrop-filter: blur(10px);
+}
+
+.standings-table {
+    width: 100%;
+    border-collapse: collapse;
+    color: #ffffff;
+    text-align: center;
+}
+
+.standings-table th,
+.standings-table td {
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.standings-table th {
+    background-color: rgba(255, 255, 255, 0.03);
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.6);
+    text-transform: uppercase;
+    font-size: 0.85rem;
+}
+
+.standings-table tbody tr {
+    transition: background-color 0.2s ease;
+}
+
+.standings-table tbody tr:hover {
+    background-color: rgba(255, 213, 79, 0.03);
+}
+
+/* Qualifiers Visual Cue */
+.qualified-row {
+    background-color: rgba(255, 213, 79, 0.01);
+}
+
+.rank-cell {
+    font-weight: 700;
+    color: #FFD54F;
+}
+
+.team-cell {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-align: left;
+    font-weight: 600;
+}
+
+.table-team-logo {
+    width: 32px;
+    height: 32px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.pos-nrr { color: #00E5FF; }
+.neg-nrr { color: #ff5252; }
+
+.highlight-column { color: #FFD54F !important; }
+.pts-cell {
+    font-weight: 800;
+    color: #FFD54F;
+    font-size: 1.1rem;
+}
+
+/* =========================================
+   INDIVIDUAL STAT PLAYER LIST VIEWS
+   ========================================= */
+.player-stat-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;
+}
+
+/* Spotlight Card Design (Vibrant Leader Showcase) */
+.spotlight-card {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding: 24px;
+    border-radius: 22px;
+    border: 1px solid;
+    position: relative;
+    overflow: hidden;
+}
+
+.orange-glow {
+    background: linear-gradient(135deg, rgba(5, 11, 31, 0.9) 0%, rgba(255, 118, 20, 0.15) 100%);
+    border-color: rgba(255, 118, 20, 0.3);
+    box-shadow: 0 0 20px rgba(255, 118, 20, 0.15);
+}
+
+.purple-glow {
+    background: linear-gradient(135deg, rgba(5, 11, 31, 0.9) 0%, rgba(162, 89, 255, 0.15) 100%);
+    border-color: rgba(162, 89, 255, 0.3);
+    box-shadow: 0 0 20px rgba(162, 89, 255, 0.15);
+}
+
+.spotlight-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.spotlight-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    letter-spacing: 1px;
+}
+
+.spotlight-body {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.spotlight-team {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.spotlight-team img {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+}
+
+.spotlight-team span {
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.spotlight-player h2 {
+    margin: 0;
+    font-size: 2.2rem;
+}
+
+.main-highlight-stat {
+    margin: 0;
+    font-size: 1.8rem;
+    font-weight: 800;
+}
+
+.orange-text { color: #FF7614 !important; }
+.purple-text { color: #A259FF !important; }
+
+/* Sub Player Cards */
+.detailed-ranking-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.stat-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 16px 24px;
+    border-radius: 18px;
+    background-color: rgba(5, 11, 31, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    flex-wrap: wrap;
+    transition: transform 0.2s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+}
+
+.orange-border:hover { border-color: rgba(255, 118, 20, 0.4); }
+.purple-border:hover { border-color: rgba(162, 89, 255, 0.4); }
+
+.rank-badge h4 {
+    margin: 0;
+    font-size: 1.4rem;
+    color: #FFD54F;
+}
+
+.rank-badge p {
+    margin: 0;
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.4);
+    letter-spacing: 1px;
+}
+
+.player-profile-block {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex: 1;
+    min-width: 200px;
+}
+
+.player-profile-block img {
+    width: 44px;
+    height: auto;
+    border-radius: 8px;
+}
+
+.player-profile-block h4 {
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.player-profile-block p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.stat-metrics-block {
+    display: flex;
+    gap: 30px;
+}
+
+.stat-metrics-block div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.stat-metrics-block p {
+    margin: 0;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.stat-metrics-block h3 {
+    margin: 0;
+    font-size: 1.3rem;
+    font-weight: 700;
+}
+
+/* =========================================
+   RECORDS GRID VIEW (Tab 4)
+   ========================================= */
+.records-grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 20px;
+    width: 100%;
+}
+
+.record-grid-card {
+    background-color: rgba(5, 11, 31, 0.75);
+    border: 1px solid rgba(0, 229, 255, 0.15);
+    border-radius: 20px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 12px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.record-grid-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 20px rgba(0, 229, 255, 0.15);
+    border-color: #00E5FF;
+}
+
+.record-icon-badge {
+    background-color: rgba(0, 229, 255, 0.1);
+    border: 1px solid rgba(0, 229, 255, 0.25);
+    color: #00E5FF;
+    padding: 12px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+}
+
+.record-title {
+    margin: 0;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.6);
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.record-stat-value {
+    margin: 0;
+    font-size: 1.6rem;
+    color: #00E5FF;
+    font-weight: 800;
+}
+
+.record-holder-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    padding-top: 12px;
+    width: 100%;
+    text-align: left;
+}
+
+.record-holder-info img {
+    width: 32px;
+    height: auto;
+    border-radius: 6px;
+}
+
+.record-holder-info h4 {
+    margin: 0;
+    font-size: 0.9rem;
+    font-weight: 700;
+}
+
+.record-holder-info p {
+    margin: 0;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+/* =========================================
+   MEDIA RESPONSIVENESS (Matches standard rules)
+   ========================================= */
+@media (max-width: 768px) {
+    .stats-container {
+        padding: 24px 16px;
+        gap: 18px;
+    }
+    .stats-heading h1 {
+        font-size: 36px;
+    }
+    .stats-heading p {
+        font-size: 0.95rem;
+        max-width: 100%;
+    }
+    .All-stats-tabs {
+        gap: 12px;
+        padding: 10px 12px;
+    }
+    .tab-btn {
+        min-width: auto;
+        width: auto;
+        padding: 10px 14px;
+        font-size: 0.9rem;
+    }
+    .tab-icon {
+        display: none; /* Hiding decorative icon on smaller screens for layout space */
+    }
+    .stats-tag {
+        justify-content: center;
+    }
+    
+    .standings-table th, 
+    .standings-table td {
+        padding: 12px 10px;
+        font-size: 0.85rem;
+    }
+    .team-cell span {
+        display: none; /* Shows logos only on narrow tables to prevent scrolling */
+    }
+    .team-cell::after {
+        content: attr(alt); /* Fallback */
+    }
+
+    .spotlight-player h2 {
+        font-size: 1.6rem;
+    }
+    .main-highlight-stat {
+        font-size: 1.4rem;
+    }
+    .stat-card {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 18px;
+        gap: 16px;
+    }
+    .player-profile-block {
+        width: 100%;
+        min-width: auto;
+    }
+    .stat-metrics-block {
+        justify-content: space-between;
+        width: 100%;
+    }
+}

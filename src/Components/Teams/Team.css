@@ -1,0 +1,16 @@
+.team{
+    flex:1;
+    display: flex;
+    flex-wrap: wrap;
+    background-color: #0A1733;
+    color: #FFFFFF;
+}
+
+.team-card{
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 16px;
+    margin: 16px;
+    text-align: center;
+    background-color: #f9f9f9;
+}

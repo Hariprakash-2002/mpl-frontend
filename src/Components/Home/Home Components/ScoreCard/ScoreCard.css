@@ -1,0 +1,84 @@
+.score-card{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    /* background-color: rgb(5, 11, 31); */
+    background-color: rgba(5, 11, 31, 0.7); 
+    backdrop-filter: blur(100px);
+    border: 1px solid #202020;
+    color: #FFFFFF;
+    padding: 20px 30px;
+    border-radius: 10px;
+    width: 600px;
+    max-height: 250px;
+}
+
+.score1{
+    display: flex;
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+}
+.score1 h3{
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.score2{
+    display: flex;
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.score3{
+    display: flex;
+    gap: 20px;
+    width: 100%;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+}
+.score-btn button{
+    background-color: #337dec;
+    color: #000000;
+    font-size: 16px;
+    border: none;
+    padding: 8px 30px;
+    border-radius: 15px;
+    cursor: pointer;
+}
+
+.team1, .team2{
+    display: flex;
+    align-items: center;
+    gap: 0px;
+}
+
+.team-logo{
+    width: 200px;
+    height: auto;
+    object-fit: contain;
+}
+
+
+@media (max-width: 768px) {
+    .score-card {
+        width: 90%;
+        min-height: 350px ;
+        padding: 15px 20px;
+    }
+
+    .team-logo {
+        width: 100px;
+        min-height: 150px;
+    }
+    .team1, .team2 {
+        flex-direction: column;
+    }
+}

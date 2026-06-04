@@ -1,0 +1,83 @@
+.teams-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 40px 24px;
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    height: 100%;
+}
+
+.team-heading {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    color: #ffffff;
+    text-shadow: 0 0 10px rgba(255, 213, 79, 0.5);
+    margin-bottom: 30px;
+    max-width: 1200px;
+    width: 100%;
+    align-self: center;
+}
+
+.hero-logo-img {
+    width: 120px;
+    height: auto;
+    margin-bottom: 10px;
+}
+
+.team-heading h1 {
+    font-size: 55px;
+    text-transform: uppercase;
+    margin: 0;
+    font-weight: 800;
+}
+
+.highlight {
+    color: #FFD54F;
+    text-shadow: 0 0 10px rgba(255, 213, 79, 0.5);
+}
+
+.team-heading p {
+    font-size: 1rem;
+    margin: 0;
+    font-weight: 300;
+    letter-spacing: 0.05em;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.main-content {
+    flex: 1;
+    width: 100%;
+    max-width: 1200px;
+    align-self: center;
+    overflow: hidden;
+}
+
+/* Responsive configurations */
+@media (max-width: 768px) {
+    .teams-main {
+        padding: 16px 12px;
+        overflow-y: auto;
+    }
+    .team-heading {
+        align-items: center;
+        text-align: center;
+        margin-bottom: 16px;
+    }
+    .hero-logo-img {
+        width: 70px;
+    }
+    .team-heading h1 {
+        font-size: 28px;
+        line-height: 1.2;
+    }
+    .team-heading p {
+        font-size: 0.85rem;
+    }
+    .main-content {
+        overflow-y: auto;
+        padding-right: 8px;
+    }
+}

@@ -1,0 +1,68 @@
+/* Glassmorphic Form Card Wrapper */
+.admin-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: rgba(5, 11, 31, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 24px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  max-width: 450px;
+  width: 100%;
+}
+
+/* Translucent Input Fields */
+.admin-form input {
+  width: 100%;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  color: #ffffff;
+  font-size: 0.95rem;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.admin-form input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* Focused input state with Gold Highlight */
+.admin-form input:focus {
+  border-color: #ffd54f;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 10px rgba(255, 213, 79, 0.15);
+}
+
+/* Chrome/Safari Auto-fill reset */
+.admin-form input:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0px 1000px rgba(5, 11, 31, 0.9) inset;
+  -webkit-text-fill-color: #ffffff;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Primary Submit Button with Gold Glow */
+.admin-form button[type="submit"] {
+  padding: 12px;
+  background: #ffd54f;
+  border: 1px solid #ffd54f;
+  color: #020817;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  margin-top: 8px;
+}
+
+.admin-form button[type="submit"]:hover {
+  background: #ffffff;
+  border-color: #ffffff;
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+}

@@ -1,0 +1,238 @@
+.fixtures{
+    background:
+    radial-gradient(circle at top left,
+    rgba(255, 196, 0, 0.08),
+    transparent 25%),
+
+    radial-gradient(circle at top right,
+    rgba(0, 132, 255, 0.12),
+    transparent 30%),
+
+    linear-gradient(
+    135deg,
+    #020817 0%,
+    #04102D 25%,
+    #071B4D 50%,
+    #04102D 75%,
+    #020817 100%
+    );
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding: 40px 24px;
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+}
+
+.fixtures-heading{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: #ffffff;
+    text-shadow: 0 0 10px rgba(255, 213, 79, 0.5);
+}
+
+.fixtures-heading p{
+    margin: 0;
+    max-width: 860px;
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 1rem;
+}
+
+.highlight{
+    color: #FFD54F;
+    text-shadow: 0 0 10px rgba(255, 213, 79, 0.5);
+}
+
+.fixtures-heading h1{
+    font-size: 60px;
+    text-transform: uppercase;
+    margin: 0;
+}
+
+.All-matches-dates{
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    background-color: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 12px 16px;
+    border-radius: 14px;
+    color: #ffffff;
+    width: min(100%, 1000px);
+}
+
+.all-dates{
+    border-right: 1px solid #444;
+    padding: 12px 20px;
+    border-radius: 12px;
+    border: 1px solid #202020;
+    background-color: rgba(255, 255, 255, 0.08);
+    min-width: 130px;
+    text-align: center;
+}
+
+.all-dates p,
+.match-date p,
+.calender-icon{
+    margin: 0;
+}
+
+.match-date{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.calender-icon{
+    padding: 0 16px;
+}
+
+.upcoming-tag{
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 10px;
+    color: #ffffff;
+    text-shadow: 0 0 10px rgba(255, 213, 79, 0.5);
+    width: min(100%, 1000px);
+    padding: 14px 18px;
+    background-color: rgba(255, 213, 79, 0.08);
+    border-radius: 14px;
+    border: 1px solid rgba(255, 213, 79, 0.2);
+}
+
+.all-matches-list{
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    width: min(100%, 1000px);
+}
+
+.matches-list{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 20px;
+    border-radius: 22px;
+    background-color: rgba(5, 11, 31, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    width: 100%;
+    flex-wrap: wrap;
+}
+
+.date-detiles,
+.matches-teams,
+.matches-pool{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    color: #ffffff;
+    min-width: 160px;
+}
+
+.date-detiles p,
+.matches-pool p{
+    margin: 0;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.matches-teams{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    flex: 1;
+    min-width: 220px;
+    flex-wrap: wrap;
+}
+
+.matches-teams img{
+    width: 72px;
+    height: auto;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.matches-teams p{
+    margin: 0;
+    font-weight: 700;
+    color: #FFD54F;
+}
+
+.matches-pool p{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+@media (max-width: 768px) {
+    .fixtures{
+        padding: 24px 16px;
+        gap: 18px;
+    }
+    .fixtures-heading h1{
+        font-size: 40px;
+    }
+    .fixtures-heading p{
+        font-size: 0.95rem;
+        max-width: 100%;
+    }
+    .All-matches-dates{
+        gap: 12px;
+        padding: 10px 12px;
+    }
+    .all-dates,
+    .match-date{
+        min-width: auto;
+        width: auto;
+        padding: 10px 14px;
+    }
+    .calender-icon{
+        padding: 0;
+    }
+    .upcoming-tag{
+        justify-content: center;
+    }
+    .all-matches-list{
+        width: 100%;
+    }
+    .matches-list{
+        flex-direction: column;
+        align-items: stretch;
+        padding: 18px;
+        gap: 16px;
+    }
+    .date-detiles,
+    .matches-teams,
+    .matches-pool{
+        width: 100%;
+        min-width: auto;
+    }
+    .matches-teams{
+        justify-content: space-between;
+    }
+    .matches-teams img{
+        width: 56px;
+    }
+}
+
