@@ -22,6 +22,18 @@ import Ng_Logo from '../../assets/NG_Boys_logo.png'
 import BG_Logo from '../../assets/Best_Friends_logo.png'
 import FB_Logo from '../../assets/Fire_Boys_logo.png'
 import PB_Logo from '../../assets/Pepsi_logo.png'
+import Rain_Logo from '../../assets/Rainbow_logo.png'
+import SBCC_Logo from '../../assets/SBCC_logo.png'
+import SB_Logo from '../../assets/Spark_Boys_logo.png'
+import TSM_Logo from '../../assets/Top_Star_logo.png'
+import VM_Logo from '../../assets/Vallarasu_Memorial_logo.png'
+import Y11s_Logo from '../../assets/Youngs_11_logo.png'
+import Kalai_Logo from '../../assets/Kalaipoonga_logo.png'
+import LCC_Logo from '../../assets/LCC_logo.png'
+
+
+
+
 
 const INITIAL_PURSE = 100000; 
 
@@ -29,6 +41,14 @@ const TEAMS_CONFIG = {
   'NG Boys': { logo: Ng_Logo },
   'Best Friends': { logo: BG_Logo },
   'Pepsi Boys': { logo: PB_Logo },
+  'LCC': { logo: LCC_Logo },
+  'Top Star': { logo: TSM_Logo },
+  'Rainbow': { logo: Rain_Logo },
+  'Young 11': { logo: Y11s_Logo },
+  'SBCC': { logo: SBCC_Logo },
+  'Vallarasu Memorial': { logo: VM_Logo },
+  'Kalaipoonga': { logo: Kalai_Logo },
+  'Spark Boys': { logo: SB_Logo },
   'Fire Boys': { logo: FB_Logo },
 }
 
@@ -576,15 +596,15 @@ const AdminAuction = () => {
         <div className="section-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem' }}>
           <h2>All Registered Players</h2>
           
-          <div style={{ position: 'relative', width: '300px' }}>
+          <div className="search-players-status">
             <input 
               type="text" 
               placeholder="Filter table by name, status..." 
               value={tableSearchQuery}
               onChange={(e) => setTableSearchQuery(e.target.value)}
-              style={{ paddingLeft: '35px', borderRadius: '20px' }}
+              className="search-players-input"
             />
-            <FaSearch style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#888' }} />
+            <FaSearch className="search-players-icon" />
           </div>
         </div>
 

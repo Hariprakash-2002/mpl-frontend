@@ -70,13 +70,14 @@
 @media (max-width: 768px) {
     .score-card {
         width: 90%;
-        min-height: 350px ;
+        min-height: 300px ;
         padding: 15px 20px;
     }
 
     .team-logo {
-        width: 100px;
-        min-height: 150px;
+        padding: 2px;
+        width: 100px !important;
+        min-height: 80px;
     }
     .team1, .team2 {
         flex-direction: column;

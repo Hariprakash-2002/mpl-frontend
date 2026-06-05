@@ -15,6 +15,8 @@ const TeamsMain = () => {
         <img src={logo} alt="Hero Logo" className="hero-logo-img" />
         <h1>Tournament <span className="highlight">Teams</span></h1>
         <p>Meet the franchises participating in the championship</p>
+        {/* delete this */}
+        <p>Players will be updated correctly after <span className="highlight">Auction</span></p>
         <hr width="11.5%" color="#FFD54F" />
       </div>
       

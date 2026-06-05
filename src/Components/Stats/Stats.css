@@ -28,6 +28,30 @@
     color: #eef3ff;
 }
 
+/* Gold/MVP highlights styling */
+.gold-accent-tab.active-tab {
+  background-color: #ffd54f !important;
+  color: #111111 !important;
+}
+
+.gold-glow {
+  border: 2px solid #ffd54f;
+  box-shadow: 0 0 15px rgba(255, 213, 79, 0.25);
+}
+
+.gold-border {
+  border-left: 5px solid #ffd54f !important;
+}
+
+.gold-text {
+  color: #ffd54f;
+  font-weight: bold;
+}
+
+.mvp-border {
+  border-color: #ffd54f !important;
+}
+
 .stats-heading {
     display: flex;
     flex-direction: column;

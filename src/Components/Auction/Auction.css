@@ -1144,3 +1144,15 @@
     display: none;
   }
 }
+
+
+@media (max-width: 768px) {
+  /* Hides the scrollbar completely on mobile while keeping scroll functionality */
+  .auction-page::-webkit-scrollbar {
+    display: none;
+  }
+  .auction-page {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+  }
+}

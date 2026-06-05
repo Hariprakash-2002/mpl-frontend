@@ -139,7 +139,7 @@ const AllTeams = () => {
               <h3>Roster ({selectedTeamPlayers.length} Players)</h3>
             </div>
 
-            <div className="players-cards-container">
+            {/* <div className="players-cards-container">
               {selectedTeamPlayers.map((player) => (
                 <div key={player.id} className={`player-card-profile ${player.role === 'Captain' ? 'captain-row' : ''}`}>
                   <div className="player-badge">
@@ -151,7 +151,7 @@ const AllTeams = () => {
                   </div>
                 </div>
               ))}
-            </div>
+            </div> */}
           </div>
         ) : (
           <div className="empty-selection-state">

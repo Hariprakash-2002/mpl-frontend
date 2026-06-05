@@ -667,6 +667,72 @@
 
 
 
+/* ==========================================================================
+   Search Input - Desktop (Website) View
+   ========================================================================== */
+.search-players-status {
+  position: relative;
+  width: 300px; /* Fixed desktop width */
+  margin: 15px 0;
+}
+
+.search-players-input {
+  width: 100%;
+  padding: 10px 15px 10px 38px; /* Left padding provides space for the icon */
+  font-size: 14px;
+  color: #333;
+  background-color: #ffffff;
+  border: 1.5px solid #dcdcdc;
+  border-radius: 20px;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+/* Subtle focus state */
+.search-players-input:focus {
+  border-color: #2b6cb0; /* Adjust to match your theme color */
+  box-shadow: 0 0 0 3px rgba(43, 108, 176, 0.15);
+}
+
+.search-players-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #888888;
+  pointer-events: none; /* Allows clicks to pass through to the input */
+  transition: color 0.25s ease;
+}
+
+/* Changes the icon color when the input is active */
+.search-players-input:focus + .search-players-icon {
+  color: #2b6cb0;
+}
+
+/* ==========================================================================
+   Search Input - Mobile View (768px and below)
+   ========================================================================== */
+@media (max-width: 768px) {
+  .search-players-status {
+    width: 100%; /* Spans full width on small screens */
+    max-width: 100%;
+    margin: 10px 0;
+  }
+
+  .search-players-input {
+    font-size: 16px; /* Critical: prevents auto-zooming on iOS devices on focus */
+    padding: 12px 15px 12px 42px; /* Slightly larger target area for easier tapping */
+  }
+
+  .search-players-icon {
+    left: 16px;
+    font-size: 15px; /* Marginally larger icon for readability */
+  }
+}
+
+
+
 /* =========================================
    RESPONSIVE LAYOUT CONFIGURATIONS
    ========================================= */

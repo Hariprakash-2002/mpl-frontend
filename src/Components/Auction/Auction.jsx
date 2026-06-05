@@ -24,16 +24,50 @@ import Ng_Logo from '../../assets/NG_Boys_logo.png'
 import BG_Logo from '../../assets/Best_Friends_logo.png'
 import FB_Logo from '../../assets/Fire_Boys_logo.png'
 import PB_Logo from '../../assets/Pepsi_logo.png'
+import Rain_Logo from '../../assets/Rainbow_logo.png'
+import SBCC_Logo from '../../assets/SBCC_logo.png'
+import SB_Logo from '../../assets/Spark_Boys_logo.png'
+import TSM_Logo from '../../assets/Top_Star_logo.png'
+import VM_Logo from '../../assets/Vallarasu_Memorial_logo.png'
+import Y11s_Logo from '../../assets/Youngs_11_logo.png'
+import Kalai_Logo from '../../assets/Kalaipoonga_logo.png'
+import LCC_Logo from '../../assets/LCC_logo.png'
 
 const INITIAL_PURSE = 100000; 
+
+
+// ('NG Boys', NULL, 0.0),
+// ('Best Friends', NULL, 0.0),
+// ('Pepsi Boys', NULL, 0.0),
+// ('Fire Boys', NULL, 0.0),
+// ('LCC', NULL, 0.0),
+// ('Top Star', NULL, 0.0),
+// ('Rainbow', NULL, 0.0),
+// ('Young 11', NULL, 0.0),
+// ('SBCC', NULL, 0.0),
+// ('Vallarasu Memorial', NULL, 0.0),
+// ('Kalaipoonga', NULL, 0.0),
+// ('Spark Boys', NULL, 0.0)
+// ;
 
 // UI style map matching database team names to their UI classes and local assets
 const TEAM_STYLE_MAP = {
   'ng boys': { abbr: 'NG', logo: Ng_Logo, colorClass: 'team-mumbai' },
   'best friends': { abbr: 'BF', logo: BG_Logo, colorClass: 'team-kolkata' },
   'pepsi boys': { abbr: 'PB', logo: PB_Logo, colorClass: 'team-delhi' },
-  'fire boys': { abbr: 'FB', logo: FB_Logo, colorClass: 'team-rc' },
+  'fire boys': { abbr: 'FB', logo: FB_Logo, colorClass: 'team-fb' },
+  'rainbow': { abbr: 'RB', logo: Rain_Logo, colorClass: 'team-rc' },
+  'sbcc': { abbr: 'SBCC', logo: SBCC_Logo, colorClass: 'team-sbcc' },
+  'spark boys': { abbr: 'SB', logo: SB_Logo, colorClass: 'team-spark' },
+  'top star': { abbr: 'TSM', logo: TSM_Logo, colorClass: 'team-tsm' },
+  'vallarasu memorial': { abbr: 'VM', logo: VM_Logo, colorClass: 'team-vm' },
+  'young 11': { abbr: 'Y11', logo: Y11s_Logo, colorClass: 'team-y11' },
+  'kalaipoonga': { abbr: 'KP', logo: Kalai_Logo, colorClass: 'team-kalai' },
+  'lcc': { abbr: 'LCC', logo: LCC_Logo, colorClass: 'team-lcc' },
 };
+
+
+
 
 const API_BASE_URL = "https://mpl-backend-cibq.onrender.com";
 
@@ -598,7 +632,7 @@ const Auction = () => {
                           <tr key={player.id} className={`db-row status-${pStatus.toLowerCase()}`}>
                             <td className="db-player-cell">
                               <strong>{player.playerName}</strong>
-                              <span className="db-nationality-span">{player.nationality} {player.nationality !== 'India' && '✈️'}</span>
+                              <span className="db-nationality-span">{player.nationality} {player.nationality !== 'Murungapatti' && '✈️'}</span>
                             </td>
                             <td className="db-role-cell">
                               <span className="role-pill">{player.role}</span>

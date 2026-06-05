@@ -4,7 +4,7 @@ import { FaTrophy, FaAward, FaCrown, FaStar } from 'react-icons/fa'
 import { FaRankingStar } from 'react-icons/fa6'
 import { BsFire, BsLightningChargeFill } from 'react-icons/bs'
 
-// Importing your existing team logos for consistency
+// Importing team logos for consistency
 import Ng_Logo from '../../assets/NG_Boys_logo.png'
 import BG_Logo from '../../assets/Best_Friends_logo.png'
 import FB_Logo from '../../assets/Fire_Boys_logo.png'
@@ -19,17 +19,16 @@ import Kalai_Logo from '../../assets/Kalaipoonga_logo.png'
 import LCC_Logo from '../../assets/LCC_logo.png'
 
 const Stats = () => {
-    // Interactive tabs for navigation
-    const [activeTab, setActiveTab] = useState('standings');
+    // Interactive tabs for navigation (default set to 'mvp')
+    const [activeTab, setActiveTab] = useState('mvp');
 
-    // 1. Team Standings Data
-    const standingsData = [
-        { rank: 1, name: 'NG Boys', logo: Ng_Logo, played: 5, won: 4, lost: 1, nrr: '+1.420', pts: 8, pool: 'Pool A' },
-        { rank: 2, name: 'Spark Boys', logo: SB_Logo, played: 5, won: 4, lost: 1, nrr: '+0.950', pts: 8, pool: 'Pool B' },
-        { rank: 3, name: 'Fire Boys', logo: FB_Logo, played: 5, won: 3, lost: 2, nrr: '+0.320', pts: 6, pool: 'Pool A' },
-        { rank: 4, name: 'Kalaipoonga', logo: Kalai_Logo, played: 5, won: 3, lost: 2, nrr: '-0.150', pts: 6, pool: 'Pool B' },
-        { rank: 5, name: 'Best Friends', logo: BG_Logo, played: 5, won: 1, lost: 4, nrr: '-0.890', pts: 2, pool: 'Pool A' },
-        { rank: 6, name: 'LCC', logo: LCC_Logo, played: 5, won: 0, lost: 5, nrr: '-1.650', pts: 0, pool: 'Pool B' },
+    // 1. Most Valuable Player (MVP) Data
+    const mvpLeaders = [
+        { rank: 1, name: 'Sanjay Kumar', teamName: 'NG Boys', logo: Ng_Logo, points: 450, matches: 5, runs: 284, wickets: 2, catches: 3 },
+        { rank: 2, name: 'Dinesh Karthik', teamName: 'Spark Boys', logo: SB_Logo, points: 410, matches: 5, runs: 50, wickets: 12, catches: 2 },
+        { rank: 3, name: 'Arun Prasath', teamName: 'Spark Boys', logo: SB_Logo, points: 380, matches: 5, runs: 245, wickets: 0, catches: 1 },
+        { rank: 4, name: 'Manoj Kumar', teamName: 'NG Boys', logo: Ng_Logo, points: 340, matches: 5, runs: 30, wickets: 10, catches: 1 },
+        { rank: 5, name: 'Karthik Raja', teamName: 'Fire Boys', logo: FB_Logo, points: 310, matches: 5, runs: 210, wickets: 0, catches: 0 },
     ];
 
     // 2. Batting Stats Data (Orange Cap Leaderboard)
@@ -58,20 +57,20 @@ const Stats = () => {
 
     return (
         <div className='stats-container'>
-            {/* Header section matching fixtures & gallery layout */}
+            {/* Header section */}
             <div className="stats-heading">
                 <h1>Tournament <span className="highlight">Standings & Stats</span></h1>
                 <p>Track team standings, top run-scorers, wicket-takers, and legendary records</p>
                 <hr width="11.5%" color="#FFD54F" />
             </div>
 
-            {/* Interactive Tab bar styling matching the All-matches-dates layout */}
+            {/* Interactive Tab bar styling */}
             <div className="All-stats-tabs">
                 <div 
-                    className={`tab-btn ${activeTab === 'standings' ? 'active-tab' : ''}`}
-                    onClick={() => setActiveTab('standings')}
+                    className={`tab-btn gold-accent-tab ${activeTab === 'mvp' ? 'active-tab' : ''}`}
+                    onClick={() => setActiveTab('mvp')}
                 >
-                    <p>LEADERBOARD</p>
+                    <p>MVP LEADERBOARD</p>
                 </div>
                 <div 
                     className={`tab-btn orange-accent-tab ${activeTab === 'batting' ? 'active-tab' : ''}`}
@@ -100,46 +99,65 @@ const Stats = () => {
             {/* Subheading tag section */}
             <div className={`stats-tag ${activeTab}-border`}>
                 <FaTrophy size={20} color="#FFD54F" />
-                <p>{activeTab.toUpperCase()} OVERVIEW</p>
+                <p>{activeTab === 'mvp' ? 'MOST VALUABLE PLAYER' : activeTab.toUpperCase()} OVERVIEW</p>
             </div>
 
             {/* Dynamic Rendering of Content based on Selected Tab */}
             <div className="stats-content-wrapper">
                 
-                {/* TAB 1: TEAM STANDINGS (Leaderboard Table) */}
-                {activeTab === 'standings' && (
-                    <div className="table-responsive-wrapper">
-                        <table className="standings-table">
-                            <thead>
-                                <tr>
-                                    <th>Rank</th>
-                                    <th>Team</th>
-                                    <th>P</th>
-                                    <th>W</th>
-                                    <th>L</th>
-                                    <th>NRR</th>
-                                    <th>Pool</th>
-                                    <th className="highlight-column">Points</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {standingsData.map((team) => (
-                                    <tr key={team.rank} className={team.rank <= 4 ? 'qualified-row' : ''}>
-                                        <td className="rank-cell">#{team.rank}</td>
-                                        <td className="team-cell">
-                                            <img src={team.logo} alt={team.name} className="table-team-logo" />
-                                            <span>{team.name}</span>
-                                        </td>
-                                        <td>{team.played}</td>
-                                        <td>{team.won}</td>
-                                        <td>{team.lost}</td>
-                                        <td className={parseFloat(team.nrr) >= 0 ? 'pos-nrr' : 'neg-nrr'}>{team.nrr}</td>
-                                        <td>{team.pool}</td>
-                                        <td className="pts-cell">{team.pts}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                {/* TAB 1: MOST VALUABLE PLAYER (MVP List) */}
+                {activeTab === 'mvp' && (
+                    <div className="player-stat-list">
+                        {/* Showcase MVP Leader Card */}
+                        <div className="spotlight-card gold-glow">
+                            <div className="spotlight-header">
+                                <FaCrown size={30} color="#FFD54F" />
+                                <h3>MVP LEADER</h3>
+                            </div>
+                            <div className="spotlight-body">
+                                <div className="spotlight-team">
+                                    <img src={mvpLeaders[0].logo} alt="Team Logo" />
+                                    <span>{mvpLeaders[0].teamName}</span>
+                                </div>
+                                <div className="spotlight-player">
+                                    <h2>{mvpLeaders[0].name}</h2>
+                                    <p className="main-highlight-stat">{mvpLeaders[0].points} Points</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Standard MVP Ranking list */}
+                        <div className="detailed-ranking-list">
+                            {mvpLeaders.map((player) => (
+                                <div className="stat-card gold-border" key={player.rank}>
+                                    <div className="rank-badge">
+                                        <p>RANK</p>
+                                        <h4>#{player.rank}</h4>
+                                    </div>
+                                    <div className="player-profile-block">
+                                        <img src={player.logo} alt="Team Logo" />
+                                        <div>
+                                            <h4>{player.name}</h4>
+                                            <p>{player.teamName}</p>
+                                        </div>
+                                    </div>
+                                    <div className="stat-metrics-block">
+                                        <div>
+                                            <p>MVP Points</p>
+                                            <h3 className="gold-text">{player.points}</h3>
+                                        </div>
+                                        <div>
+                                            <p>Runs</p>
+                                            <h3>{player.runs}</h3>
+                                        </div>
+                                        <div>
+                                            <p>Wickets</p>
+                                            <h3>{player.wickets}</h3>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 )}
 
@@ -164,7 +182,7 @@ const Stats = () => {
                             </div>
                         </div>
 
-                        {/* Standard Ranking list utilizing the existing matches-list structure */}
+                        {/* Standard Ranking list */}
                         <div className="detailed-ranking-list">
                             {battingLeaders.map((player) => (
                                 <div className="stat-card orange-border" key={player.rank}>

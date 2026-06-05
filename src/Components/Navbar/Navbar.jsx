@@ -23,7 +23,7 @@ const Navbar = () => {
                 <li><NavLink to='/pointstable' className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>PointsTable</NavLink></li>
                 <li><NavLink to='/players' className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>Players</NavLink></li>
                 <li><NavLink to='/auction' className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>Auction</NavLink></li>
-                <li><NavLink to='/gallery' className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>Gallery</NavLink></li>
+                {/* <li><NavLink to='/gallery' className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>Gallery</NavLink></li> */}
                 <li><NavLink to='/stats' className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>Stats</NavLink></li>
                 <li><NavLink to='/sponsors' className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>Sponsors</NavLink></li>
             </ul>

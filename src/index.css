@@ -7,6 +7,11 @@ body,
     overflow: hidden;
 }
 
+body {
+  margin: 0 !important; /* Forces the margin to be 0 and overrides any defaults */
+  padding: 0;
+}
+
 @media (max-width: 768px) {
    .body{
     min-height: 100vh;
