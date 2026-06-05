@@ -1,6 +1,6 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import './Auction.css'
-import { useQuery } from '@tanstack/react-query' // <-- React Query Integration
+import { useQuery, useQueryClient } from '@tanstack/react-query' 
 import { 
   FaTrophy, 
   FaSearch, 
@@ -11,12 +11,15 @@ import {
   FaCoins, 
   FaBaseballBall,
   FaHistory,
-  FaCalendarAlt
+  FaCalendarAlt,
+  FaSpinner,
+  FaExclamationTriangle,
+  FaCrown
 } from 'react-icons/fa'
 import { GiCricketBat, GiGavel } from 'react-icons/gi'
 import { RiShieldUserLine } from 'react-icons/ri'
 
-// Team logos imported from your assets folder
+// Team logos imported from your assets folder as fallbacks
 import Ng_Logo from '../../assets/NG_Boys_logo.png'
 import BG_Logo from '../../assets/Best_Friends_logo.png'
 import FB_Logo from '../../assets/Fire_Boys_logo.png'
@@ -24,15 +27,24 @@ import PB_Logo from '../../assets/Pepsi_logo.png'
 
 const INITIAL_PURSE = 100000; 
 
-const TEAMS_CONFIG = {
-  'NG Boys': { abbr: 'NG', logo: Ng_Logo, colorClass: 'team-mumbai' },
-  'Best Friends': { abbr: 'BF', logo: BG_Logo, colorClass: 'team-kolkata' },
-  'Pepsi Boys': { abbr: 'PB', logo: PB_Logo, colorClass: 'team-delhi' },
-  'Fire Boys': { abbr: 'FB', logo: FB_Logo, colorClass: 'team-rc' },
-}
+// UI style map matching database team names to their UI classes and local assets
+const TEAM_STYLE_MAP = {
+  'ng boys': { abbr: 'NG', logo: Ng_Logo, colorClass: 'team-mumbai' },
+  'best friends': { abbr: 'BF', logo: BG_Logo, colorClass: 'team-kolkata' },
+  'pepsi boys': { abbr: 'PB', logo: PB_Logo, colorClass: 'team-delhi' },
+  'fire boys': { abbr: 'FB', logo: FB_Logo, colorClass: 'team-rc' },
+};
+
+const API_BASE_URL = "https://mpl-backend-cibq.onrender.com";
+
+const fetchTeamsFromDb = async () => {
+  const res = await fetch(`${API_BASE_URL}/team/all`);
+  if (!res.ok) throw new Error("Database offline");
+  return res.json();
+};
 
 const fetchPlayersFromDb = async () => {
-  const res = await fetch("https://mpl-backend-cibq.onrender.com/player/all");
+  const res = await fetch(`${API_BASE_URL}/player/all`);
   if (!res.ok) throw new Error("Database offline");
   return res.json();
 };
@@ -44,34 +56,79 @@ const formatPurse = (value) => {
   return `${(value / 1000)} K`
 }
 
+// Normalized getters to safely handle database naming variations
+const getStatus = (player) => player.auctionStatus || player.status || 'Unprocessed';
+const getPrice = (player) => player.auctionPrice !== undefined ? player.auctionPrice : (player.soldPrice !== undefined ? player.soldPrice : 0);
+
 const Auction = () => {
+  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('')
   const [showFullLog, setShowFullLog] = useState(false)
   const [expandedTeams, setExpandedTeams] = useState({
-    'Mumbai Masters': true, 
+    'NG Boys': true, 
     'Registered': false,   
   })
   const [expandedPlayers, setExpandedPlayers] = useState({})
 
-  // Local fallback players list used automatically if Spring Boot is offline
-  const localFallbackPlayers = [
-    { id: 1, playerName: 'Sakthivel', role: 'Batsman', jersey: 18, nationality: 'India', age: 37, buyerTeam: 'NG Boys', auctionStatus: 'Sold', auctionPrice: 24000, basePrice: 20000 },
-    { id: 2, playerName: 'Prathap', role: 'Bowler', jersey: 93, nationality: 'India', age: 32, buyerTeam: 'Best Friends', auctionStatus: 'Sold', auctionPrice: 18000, basePrice: 15000 },
-    { id: 3, playerName: 'Vadivazhagan', role: 'All-Rounder', jersey: 33, nationality: 'India', age: 32, buyerTeam: 'Pepsi Boys', auctionStatus: 'Sold', auctionPrice: 16000, basePrice: 12000 },
-    { id: 4, playerName: 'Mani Barathi', role: 'Wicket-Keeper', jersey: 12, nationality: 'South Africa', age: 33, buyerTeam: 'Fire Boys', auctionStatus: 'Sold', auctionPrice: 14000, basePrice: 12000 },
-    { id: 5, playerName: 'Gowtham', role: 'Batsman', jersey: 63, nationality: 'Australia', age: 35, buyerTeam: 'NG Boys', auctionStatus: 'Sold', auctionPrice: 15000, basePrice: 10000 },
-    { id: 6, playerName: 'Praveen Kumar', role: 'Bowler', jersey: 56, nationality: 'India', age: 36, buyerTeam: 'Unsold', auctionStatus: 'Unsold', auctionPrice: 0, basePrice: 20000 },
-    { id: 7, playerName: 'Suriya', role: 'Bowler', jersey: 19, nationality: 'Afghanistan', age: 27, buyerTeam: 'Unsold', auctionStatus: 'Upcoming', auctionPrice: 0, basePrice: 15000 }
-  ];
+  // EventSource Stream connection for pushed updates
+  useEffect(() => {
+    const eventSource = new EventSource(`${API_BASE_URL}/player/stream`);
 
-  // Retrieve players from MySQL, updating the UI in real-time
-  const { data: dbPlayers = [], isLoading, error } = useQuery({
+    eventSource.addEventListener("auction_update", () => {
+      // Refresh cache instantly when a change is made
+      queryClient.invalidateQueries({ queryKey: ['liveAuctionPlayers'] });
+      queryClient.invalidateQueries({ queryKey: ['liveAuctionTeams'] });
+    });
+
+    eventSource.onerror = () => {
+      console.warn("SSE disconnected. Reconnecting automatically...");
+    };
+
+    return () => {
+      eventSource.close();
+    };
+  }, [queryClient]);
+
+  // Read data with static cache (SSE invalidates this automatically)
+  const { data: dbPlayers, isLoading: isPlayersLoading, isError: isPlayersError } = useQuery({
     queryKey: ['liveAuctionPlayers'],
     queryFn: fetchPlayersFromDb,
-    refetchInterval: 1000, // Poll database every 1 second [2]
-    staleTime: 500,
-    retry: false
+    refetchInterval: 10000, // 10 seconds interval for public users
+    staleTime: 5000, 
+    retry: true
   });
+
+  const { data: dbTeams, isLoading: isTeamsLoading, isError: isTeamsError } = useQuery({
+    queryKey: ['liveAuctionTeams'],
+    queryFn: fetchTeamsFromDb,
+    refetchInterval: 10000, // 10 seconds interval for public users
+    staleTime: 5000, 
+    retry: true
+  });
+
+
+  if (isPlayersLoading || isTeamsLoading) {
+    return (
+      <div className="auction-page-fallback-state">
+        <FaSpinner className="fallback-spinner" />
+        <h2>Connecting to Live Stream...</h2>
+        <p>Awaiting live connection stream from server...</p>
+      </div>
+    );
+  }
+
+  if (isPlayersError || isTeamsError || !dbPlayers || !dbTeams) {
+    return (
+      <div className="auction-page-fallback-state error-state">
+        <FaExclamationTriangle className="fallback-error-icon" />
+        <h2>Live Server Offline</h2>
+        <p>The host database server at ${API_BASE_URL} is unreachable. Retrying...</p>
+      </div>
+    );
+  }
+
+  const activePlayers = dbPlayers;
+  const activeTeams = dbTeams;
 
   const toggleTeam = (teamName) => {
     setExpandedTeams((prev) => ({ ...prev, [teamName]: !prev[teamName] }))
@@ -81,32 +138,45 @@ const Auction = () => {
     setExpandedPlayers((prev) => ({ ...prev, [playerId]: !prev[playerId] }))
   }
 
-  const activePlayers = dbPlayers.length > 0 ? dbPlayers : localFallbackPlayers;
+  const getTeamStyle = (teamName) => {
+    const key = teamName?.toLowerCase().trim();
+    return TEAM_STYLE_MAP[key] || { 
+      abbr: teamName?.substring(0, 3).toUpperCase() || 'TM', 
+      logo: null, 
+      colorClass: 'team-default' 
+    };
+  };
 
-  const soldPlayers = activePlayers.filter((item) => item.auctionStatus === 'Sold')
-  const unsoldPlayers = activePlayers.filter((item) => item.auctionStatus === 'Unsold')
-  const highestBidValue = Math.max(...soldPlayers.map((item) => item.auctionPrice || 0), 0)
+  const getTeamLogo = (teamName) => {
+    const matchedDbTeam = activeTeams.find(t => t.name?.toLowerCase() === teamName?.toLowerCase());
+    if (matchedDbTeam && matchedDbTeam.logoUrl) {
+      return matchedDbTeam.logoUrl;
+    }
+    return getTeamStyle(teamName).logo;
+  };
 
-  // Chronological log
+ const soldPlayers = activePlayers.filter((item) => getStatus(item) === 'Sold' || getStatus(item).toLowerCase() === 'retained')
+  const unsoldPlayers = activePlayers.filter((item) => getStatus(item) === 'Unsold')
+  const highestBidValue = Math.max(...soldPlayers.map((item) => getPrice(item)), 0)
+
   const sortedChronologicalLog = [...activePlayers].sort((a, b) => b.id - a.id)
-
-  // Last sold player
   const latestSoldPlayer = soldPlayers[soldPlayers.length - 1]
+  const nextPlayer = activePlayers.find((item) => getStatus(item) === 'Upcoming')
 
-  // Upcoming designated player
-  const nextPlayer = activePlayers.find((item) => item.auctionStatus === 'Upcoming')
-
-  // Calculated team spent records
-  const teamMetrics = Object.keys(TEAMS_CONFIG).reduce((acc, teamName) => {
-    const playersBought = soldPlayers.filter((p) => p.buyerTeam === teamName)
-    const totalSpent = playersBought.reduce((sum, p) => sum + (p.auctionPrice || 0), 0)
-    const foreignCount = playersBought.filter((p) => p.nationality !== 'India').length
+  const teamMetrics = activeTeams.reduce((acc, team) => {
+    const teamName = team.name;
+    const playersBought = soldPlayers.filter(
+      (p) => p.buyerTeam && p.buyerTeam.toLowerCase() === teamName.toLowerCase()
+    );
+    
+    const dynamicSpent = playersBought.reduce((sum, p) => sum + getPrice(p), 0);
+    const spentValue = dynamicSpent > 0 ? dynamicSpent : (team.spent || 0);
 
     acc[teamName] = {
       playersCount: playersBought.length,
-      spent: totalSpent,
-      remaining: INITIAL_PURSE - totalSpent,
-      foreignCount: foreignCount,
+      spent: spentValue,
+      remaining: INITIAL_PURSE - spentValue,
+      otherPanchayatCount: playersBought.filter((p) => p.nationality && p.nationality.toLowerCase().trim() !== 'murungapatti').length,
       players: playersBought,
     }
     return acc
@@ -131,17 +201,13 @@ const Auction = () => {
 
   return (
     <div className="auction-page">
-      {/* Top Section Header */}
       <div className="auction-header">
         <div className="header-branding">
           <span className="subtitle">Tournament Live Center</span>
           <h1>Mega Auction Purchases</h1>
-          <p>
-            Track real-time squad acquisitions, calculated remaining salary caps, and role divisions.
-          </p>
+          <p>Track real-time squad acquisitions, calculated remaining salary caps, and role divisions.</p>
         </div>
 
-        {/* Global Dashboard Metrics */}
         <div className="header-stats">
           <div className="stat-card">
             <FaTrophy />
@@ -167,9 +233,7 @@ const Auction = () => {
         </div>
       </div>
 
-      {/* Dual Ticker Banner Wrapper */}
       <div className="dual-banners-container">
-        {/* Banner 1: Real-time Ticker: Last Sold Player */}
         {latestSoldPlayer ? (
           <div className="live-ticker-banner">
             <div className="ticker-main-content">
@@ -184,20 +248,15 @@ const Auction = () => {
                 </div>
                 <div className="ticker-deal">
                   <span className="sold-label">Sold to</span>
-                  <img 
-                    src={TEAMS_CONFIG[latestSoldPlayer.buyerTeam]?.logo} 
-                    alt="" 
-                    className="ticker-team-logo" 
-                  />
+                  {getTeamLogo(latestSoldPlayer.buyerTeam) && (
+                    <img src={getTeamLogo(latestSoldPlayer.buyerTeam)} alt="" className="ticker-team-logo" />
+                  )}
                   <span className="ticker-team-name">{latestSoldPlayer.buyerTeam}</span>
-                  <span className="ticker-price">{formatPurse(latestSoldPlayer.auctionPrice)}</span>
+                  <span className="ticker-price">{formatPurse(getPrice(latestSoldPlayer))}</span>
                 </div>
               </div>
             </div>
-            <button 
-              className="view-log-btn" 
-              onClick={() => setShowFullLog(!showFullLog)}
-            >
+            <button className="view-log-btn" onClick={() => setShowFullLog(!showFullLog)}>
               <FaHistory /> {showFullLog ? 'Hide History' : 'View Full Log'}
             </button>
           </div>
@@ -205,7 +264,6 @@ const Auction = () => {
           <div className="live-ticker-banner empty-ticker">No transactions recorded yet.</div>
         )}
 
-        {/* Banner 2: Next Player */}
         {nextPlayer ? (
           <div className="live-ticker-banner next-player-banner">
             <div className="ticker-main-content">
@@ -230,7 +288,6 @@ const Auction = () => {
         )}
       </div>
 
-      {/* Expanded Chronological Live Log panel */}
       {showFullLog && (
         <div className="full-log-panel">
           <div className="log-panel-header">
@@ -238,38 +295,38 @@ const Auction = () => {
             <span className="total-sold-count">{activePlayers.length} entries on file</span>
           </div>
           <div className="log-timeline-wrapper">
-            {sortedChronologicalLog.map((player) => (
-              <div key={player.id} className="log-timeline-row">
-                <div className="log-player-meta">
-                  <strong>{player.playerName}</strong>
-                  <span className="log-role-pill">{player.role}</span>
+            {sortedChronologicalLog.map((player) => {
+              const pStatus = getStatus(player);
+              return (
+                <div key={player.id} className="log-timeline-row">
+                  <div className="log-player-meta">
+                    <strong>{player.playerName}</strong>
+                    <span className="log-role-pill">{player.role}</span>
+                  </div>
+                  <div className="log-status-action">
+                    {pStatus === 'Sold' ? (
+                      <div className="log-sold-details">
+                        <span className="arrow-indicator">→</span>
+                        <span className="bought-by">Acquired by</span>
+                        {getTeamLogo(player.buyerTeam) && (
+                          <img src={getTeamLogo(player.buyerTeam)} alt="" className="mini-log-logo" />
+                        )}
+                        <span className="log-buyer-name">{player.buyerTeam}</span>
+                        <strong className="log-final-price">{formatPurse(getPrice(player))}</strong>
+                      </div>
+                    ) : pStatus === 'Upcoming' ? (
+                      <span className="log-upcoming-badge">Upcoming</span>
+                    ) : (
+                      <span className="log-unsold-badge">Unsold</span>
+                    )}
+                  </div>
                 </div>
-                <div className="log-status-action">
-                  {player.auctionStatus === 'Sold' ? (
-                    <div className="log-sold-details">
-                      <span className="arrow-indicator">→</span>
-                      <span className="bought-by">Acquired by</span>
-                      <img 
-                        src={TEAMS_CONFIG[player.buyerTeam]?.logo} 
-                        alt="" 
-                        className="mini-log-logo" 
-                      />
-                      <span className="log-buyer-name">{player.buyerTeam}</span>
-                      <strong className="log-final-price">{formatPurse(player.auctionPrice)}</strong>
-                    </div>
-                  ) : player.auctionStatus === 'Upcoming' ? (
-                    <span className="log-upcoming-badge">Upcoming</span>
-                  ) : (
-                    <span className="log-unsold-badge">Unsold</span>
-                  )}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
 
-      {/* Search Field */}
       <div className="search-bar-container">
         <div className="search-input-wrapper">
           <FaSearch className="search-icon" />
@@ -282,7 +339,6 @@ const Auction = () => {
         </div>
       </div>
 
-      {/* Search results view */}
       {searchQuery.trim() !== '' ? (
         <section className="search-results-section">
           <div className="section-title">
@@ -290,42 +346,45 @@ const Auction = () => {
           </div>
           {filteredSearchList.length > 0 ? (
             <div className="results-list">
-              {filteredSearchList.map((player) => (
-                <div key={player.id} className="search-player-card">
-                  <div className="player-summary-row" onClick={() => togglePlayer(player.id)}>
-                    <div className="player-id-name">
-                      <h3>{player.playerName}</h3>
-                      <span className="role-pill">{player.role}</span>
-                    </div>
-                    <div className="player-summary-bids">
-                      {player.auctionStatus === 'Sold' ? (
-                        <span className="final-price-tag">{formatPurse(player.auctionPrice)}</span>
-                      ) : player.auctionStatus === 'Upcoming' ? (
-                        <span className="upcoming-status-tag">Upcoming</span>
-                      ) : (
-                        <span className="unsold-status-tag">Unsold</span>
-                      )}
-                      {expandedPlayers[player.id] ? <FaChevronUp /> : <FaChevronDown />}
-                    </div>
-                  </div>
-
-                  {expandedPlayers[player.id] && (
-                    <div className="player-nested-details">
-                      <div className="nested-grid">
-                        <div className="detail-item"><strong>Nationality:</strong> {player.nationality}</div>
-                        <div className="detail-item"><strong>Age:</strong> {player.age}</div>
-                        <div className="detail-item"><strong>Jersey:</strong> #{player.jersey}</div>
-                        <div className="detail-item"><strong>Base Price:</strong> {formatPurse(player.basePrice)}</div>
+              {filteredSearchList.map((player) => {
+                const pStatus = getStatus(player);
+                return (
+                  <div key={player.id} className="search-player-card">
+                    <div className="player-summary-row" onClick={() => togglePlayer(player.id)}>
+                      <div className="player-id-name">
+                        <h3>{player.playerName}</h3>
+                        <span className="role-pill">{player.role}</span>
                       </div>
-                      {player.auctionStatus === 'Sold' && (
-                        <div className="buyer-team-meta">
-                          <span>Acquired by: <strong>{player.buyerTeam}</strong></span>
-                        </div>
-                      )}
+                      <div className="player-summary-bids">
+                        {pStatus === 'Sold' ? (
+                          <span className="final-price-tag">{formatPurse(getPrice(player))}</span>
+                        ) : pStatus === 'Upcoming' ? (
+                          <span className="upcoming-status-tag">Upcoming</span>
+                        ) : (
+                          <span className="unsold-status-tag">Unsold</span>
+                        )}
+                        {expandedPlayers[player.id] ? <FaChevronUp /> : <FaChevronDown />}
+                      </div>
                     </div>
-                  )}
-                </div>
-              ))}
+
+                    {expandedPlayers[player.id] && (
+                      <div className="player-nested-details">
+                        <div className="nested-grid">
+                          <div className="detail-item"><strong>Nationality:</strong> {player.nationality}</div>
+                          <div className="detail-item"><strong>Age:</strong> {player.age}</div>
+                          <div className="detail-item"><strong>Jersey:</strong> #{player.jersey}</div>
+                          <div className="detail-item"><strong>Base Price:</strong> {formatPurse(player.basePrice)}</div>
+                        </div>
+                        {pStatus === 'Sold' && (
+                          <div className="buyer-team-meta">
+                            <span>Acquired by: <strong>{player.buyerTeam}</strong></span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           ) : (
             <div className="no-results-state">
@@ -334,11 +393,17 @@ const Auction = () => {
           )}
         </section>
       ) : (
-        /* Team Squad View */
         <div className="team-squads-container">
-          {Object.keys(TEAMS_CONFIG).map((teamName) => {
-            const config = TEAMS_CONFIG[teamName]
-            const metrics = teamMetrics[teamName]
+          {activeTeams.map((team) => {
+            const teamName = team.name;
+            const style = getTeamStyle(teamName);
+            const metrics = teamMetrics[teamName] || {
+              playersCount: 0,
+              spent: team.spent || 0,
+              remaining: INITIAL_PURSE - (team.spent || 0),
+              foreignCount: 0,
+              players: []
+            };
             const isOpen = expandedTeams[teamName]
 
             const groupedPlayers = {
@@ -348,17 +413,24 @@ const Auction = () => {
               'Bowler': metrics.players.filter((p) => p.role === 'Bowler'),
             }
 
+            const teamLogo = getTeamLogo(teamName);
+
             return (
-              <div key={teamName} className={`team-accordion-card ${config.colorClass}`}>
-                {/* Collapsible Accordion Header */}
+              <div key={team.id || teamName} className={`team-accordion-card ${style.colorClass}`}>
                 <div className="accordion-header" onClick={() => toggleTeam(teamName)}>
                   <div className="team-identity">
-                    <img src={config.logo} alt={teamName} className="team-badge-logo" />
+                    {teamLogo ? (
+                      <img src={teamLogo} alt={teamName} className="team-badge-logo" />
+                    ) : (
+                      <div className="unsold-placeholder-logo">🛡️</div>
+                    )}
                     <div>
-                      <h2>{teamName} ({config.abbr})</h2>
+                      <h2>{teamName} ({style.abbr})</h2>
                       <div className="header-meta-chips">
                         <span>Squad: <strong>{metrics.playersCount}</strong></span>
-                        <span>Foreign: <strong>{metrics.foreignCount}</strong></span>
+                        <span style={{ color: metrics.otherPanchayatCount > 2 ? '#ff6b6b' : 'inherit' }}>
+                          Ext. Panchayat: <strong style={{ textDecoration: metrics.otherPanchayatCount > 2 ? 'underline' : 'none' }}>{metrics.otherPanchayatCount}/2</strong>
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -374,7 +446,6 @@ const Auction = () => {
                   </div>
                 </div>
 
-                {/* Collapsible Accordion Body */}
                 {isOpen && (
                   <div className="accordion-body">
                     {metrics.playersCount > 0 ? (
@@ -394,23 +465,24 @@ const Auction = () => {
                                 const isPlayerOpen = expandedPlayers[player.id]
                                 return (
                                   <div key={player.id} className="player-row-card">
-                                    <div 
-                                      className="player-row-main"
-                                      onClick={() => togglePlayer(player.id)}
-                                    >
+                                    <div className="player-row-main" onClick={() => togglePlayer(player.id)}>
                                       <div className="player-name-section">
-                                        <h4>{player.playerName}</h4>
+                                        <h4>
+                                          {player.playerName}
+                                          {getStatus(player).toLowerCase() === 'retained' && (
+                                            <FaCrown className="retained-player-crown" title="Retained Player" />
+                                          )}
+                                        </h4>
                                         <span className="nationality-indicator">
-                                          {player.nationality} {player.nationality !== 'India' && '✈️'}
+                                          {player.nationality} {player.nationality && player.nationality.toLowerCase().trim() !== 'murungapatti' && '📍 (Ext)'}
                                         </span>
                                       </div>
                                       <div className="player-pricing-section">
-                                        <span className="row-price">{formatPurse(player.auctionPrice)}</span>
+                                        <span className="row-price">{formatPurse(getPrice(player))}</span>
                                         {isPlayerOpen ? <FaChevronUp /> : <FaChevronDown />}
                                       </div>
                                     </div>
 
-                                    {/* Collapsible nested details block */}
                                     {isPlayerOpen && (
                                       <div className="player-nested-drawer">
                                         <div className="drawer-stats-grid">
@@ -438,7 +510,6 @@ const Auction = () => {
             )
           })}
 
-          {/* Unsold Players Section */}
           <div className="unsold-accordion-card">
             <div className="accordion-header" onClick={() => toggleTeam('Unsold')}>
               <div className="team-identity">
@@ -492,7 +563,6 @@ const Auction = () => {
             )}
           </div>
 
-          {/* Collapsible Database of All Registered Players */}
           <div className="unsold-accordion-card registered-database-card">
             <div className="accordion-header" onClick={() => toggleTeam('Registered')}>
               <div className="team-identity">
@@ -522,45 +592,44 @@ const Auction = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {activePlayers.map((player) => (
-                        <tr 
-                          key={player.id} 
-                          className={`db-row status-${player.auctionStatus?.toLowerCase()}`}
-                        >
-                          <td className="db-player-cell">
-                            <strong>{player.playerName}</strong>
-                            <span className="db-nationality-span">{player.nationality} {player.nationality !== 'India' && '✈️'}</span>
-                          </td>
-                          <td className="db-role-cell">
-                            <span className="role-pill">{player.role}</span>
-                          </td>
-                          <td>{formatPurse(player.basePrice)}</td>
-                          <td className="db-status-cell">
-                            {player.auctionStatus === 'Sold' ? (
-                              <div className="db-sold-info">
-                                <span className="db-sold-badge">SOLD</span>
-                                <span className="db-buyer-abbr">
-                                  {TEAMS_CONFIG[player.buyerTeam]?.abbr}
-                                </span>
-                                <span className="db-sold-price">
-                                  {formatPurse(player.auctionPrice)}
-                                </span>
-                              </div>
-                            ) : player.auctionStatus === 'Upcoming' ? (
-                              <span className="db-status-badge badge-upcoming">NEXT</span>
-                            ) : (
-                              <span className="db-status-badge badge-passed">PASSED</span>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
+                      {activePlayers.map((player) => {
+                        const pStatus = getStatus(player);
+                        return (
+                          <tr key={player.id} className={`db-row status-${pStatus.toLowerCase()}`}>
+                            <td className="db-player-cell">
+                              <strong>{player.playerName}</strong>
+                              <span className="db-nationality-span">{player.nationality} {player.nationality !== 'India' && '✈️'}</span>
+                            </td>
+                            <td className="db-role-cell">
+                              <span className="role-pill">{player.role}</span>
+                            </td>
+                            <td>{formatPurse(player.basePrice)}</td>
+                            <td className="db-status-cell">
+                              {pStatus === 'Sold' ? (
+                                <div className="db-sold-info">
+                                  <span className="db-sold-badge">SOLD</span>
+                                  <span className="db-buyer-abbr">
+                                    {getTeamStyle(player.buyerTeam)?.abbr}
+                                  </span>
+                                  <span className="db-sold-price">
+                                    {formatPurse(getPrice(player))}
+                                  </span>
+                                </div>
+                              ) : pStatus === 'Upcoming' ? (
+                                <span className="db-status-badge badge-upcoming">NEXT</span>
+                              ) : (
+                                <span className="db-status-badge badge-passed">PASSED</span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
               </div>
             )}
           </div>
-
         </div>
       )}
     </div>

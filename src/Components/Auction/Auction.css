@@ -156,11 +156,85 @@
   animation: pulse 1.5s infinite;
 }
 
+.auction-page-fallback-state{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:16px;
+  width: 100%;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 1rem;
+  height:100%;
+  background: radial-gradient(circle at top left, rgba(255, 196, 0, 0.08), transparent 25%),
+              radial-gradient(circle at top right, rgba(0, 132, 255, 0.12), transparent 30%),
+              linear-gradient(135deg, #020817 0%, #04102D 25%, #071B4D 50%, #04102D 75%, #020817 100%);
+}
+
 @keyframes pulse {
   0% { transform: scale(0.9); opacity: 1; }
   50% { transform: scale(1.3); opacity: 0.4; }
   100% { transform: scale(0.9); opacity: 1; }
 }
+
+
+/* ==========================================================================
+   DYNAMIC LOADER & OFFLINE STREAM FALLBACKS
+   ========================================================================== */
+.auction-page-fallback-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 80vh;
+  text-align: center;
+  color: #ffffff;
+  background: #111a24;
+  padding: 2rem;
+  border-radius: 8px;
+}
+
+.fallback-spinner {
+  font-size: 3rem;
+  color: #00e5ff;
+  animation: sseSpin 1.2s linear infinite;
+  margin-bottom: 1.5rem;
+}
+
+.fallback-error-icon {
+  font-size: 3.5rem;
+  color: #ff9100;
+  margin-bottom: 1.5rem;
+}
+
+@keyframes sseSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Highlights Panchayat team-limit rule violations */
+.red-accent-blink {
+  color: #ff6b6b !important;
+  animation: sseAlertBlink 1s infinite alternate;
+  font-weight: bold;
+}
+
+@keyframes sseAlertBlink {
+  0% { opacity: 0.6; }
+  100% { opacity: 1; }
+}
+
+
+/* Golden Crown icon indicating a retained player */
+.retained-player-crown {
+  color: #ffd700;
+  margin-left: 0.5rem;
+  font-size: 0.95rem;
+  vertical-align: middle;
+  filter: drop-shadow(0 0 2px rgba(255, 215, 0, 0.4));
+}
+
+
 
 .ticker-body {
   display: flex;

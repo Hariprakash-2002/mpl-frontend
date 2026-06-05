@@ -10,11 +10,14 @@ import {
   FaFileExcel, 
   FaCheckCircle,
   FaUserMinus,
-  FaSearch
+  FaSearch,
+  FaSpinner,
+  FaExclamationTriangle,
+  FaArrowAltCircleRight,
+  FaLock
 } from 'react-icons/fa'
 import { RiShieldUserLine } from 'react-icons/ri'
 
-// Brand team logos
 import Ng_Logo from '../../assets/NG_Boys_logo.png'
 import BG_Logo from '../../assets/Best_Friends_logo.png'
 import FB_Logo from '../../assets/Fire_Boys_logo.png'
@@ -22,7 +25,6 @@ import PB_Logo from '../../assets/Pepsi_logo.png'
 
 const INITIAL_PURSE = 100000; 
 
-// Local asset map for reliable team logo rendering
 const TEAMS_CONFIG = {
   'NG Boys': { logo: Ng_Logo },
   'Best Friends': { logo: BG_Logo },
@@ -30,31 +32,76 @@ const TEAMS_CONFIG = {
   'Fire Boys': { logo: FB_Logo },
 }
 
+const API_BASE_URL = "https://mpl-backend-cibq.onrender.com";
+
 const fetchTeamsFromDb = async () => {
-  const res = await fetch("https://mpl-backend-cibq.onrender.com/team/all");
+  const res = await fetch(`${API_BASE_URL}/team/all`);
   if (!res.ok) throw new Error("Database offline");
   return res.json();
 };
 
 const fetchPlayersFromDb = async () => {
-  const res = await fetch("https://mpl-backend-cibq.onrender.com/player/all");
+  const res = await fetch(`${API_BASE_URL}/player/all`);
   if (!res.ok) throw new Error("Database offline");
   return res.json();
 };
 
-const savePlayerUpdateToDb = async (payload) => {
-  const res = await fetch("https://mpl-backend-cibq.onrender.com/player/update-player", {
+const savePlayerUpdateToDb = async ({ payload, token }) => {
+  const res = await fetch(`${API_BASE_URL}/player/update-player`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { 
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
     body: JSON.stringify(payload)
   });
-  if (!res.ok) throw new Error("Failed to update player status in database");
+  if (res.status === 401) throw new Error("Unauthorized Token. Please re-login.");
+  if (!res.ok) throw new Error("Failed to save changes.");
   return res.json();
 };
+
+const nominateUpcomingInDb = async ({ playerId, token }) => {
+  const res = await fetch(`${API_BASE_URL}/player/set-upcoming/${playerId}`, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${token}`
+    }
+  });
+  if (res.status === 401) throw new Error("Unauthorized Token. Please re-login.");
+  if (!res.ok) throw new Error("Failed to nominate player.");
+  return res.json();
+};
+
+const uploadCSVFileToDb = async ({ file, token }) => {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const res = await fetch(`${API_BASE_URL}/player/upload-csv`, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${token}`
+    },
+    body: formData
+  });
+  if (res.status === 401) throw new Error("Unauthorized Token. Please re-login.");
+  if (!res.ok) {
+    const errorMsg = await res.text();
+    throw new Error(errorMsg || "CSV parsing error.");
+  }
+  return res.text();
+};
+
+const getStatus = (player) => player.status || player.auctionStatus || 'Unprocessed';
+const getPrice = (player) => player.soldPrice !== undefined ? player.soldPrice : (player.auctionPrice !== undefined ? player.auctionPrice : 0);
 
 const AdminAuction = () => {
   const queryClient = useQueryClient();
   const [showDrawer, setShowDrawer] = useState(false);
+
+  // Authentication State
+  const [adminToken, setAdminToken] = useState(sessionStorage.getItem("admin_auth_token") || "");
+  const [passwordInput, setPasswordInput] = useState("");
+  const [loginError, setLoginError] = useState("");
 
   // Core Form States
   const [selectedPlayerId, setSelectedPlayerId] = useState('');
@@ -67,61 +114,181 @@ const AdminAuction = () => {
   const [tableSearchQuery, setTableSearchQuery] = useState('');
 
   // 1. Fetch live teams
-  const { data: dbTeams = [] } = useQuery({
+  const { data: dbTeams, isLoading: isTeamsLoading, isError: isTeamsError } = useQuery({
     queryKey: ['teams'],
     queryFn: fetchTeamsFromDb,
-    staleTime: 1000 * 60,
-    retry: false
+    refetchInterval: 2000, // 2 seconds for the admin
+    staleTime: 1000,
+    retry: true
   });
 
   // 2. Fetch live players
-  const { data: dbPlayers = [] } = useQuery({
+  const { data: dbPlayers, isLoading: isPlayersLoading, isError: isPlayersError } = useQuery({
     queryKey: ['players'],
     queryFn: fetchPlayersFromDb,
-    staleTime: 1000 * 60,
-    retry: false
+    refetchInterval: 2000, // 2 seconds for the admin
+    staleTime: 1000,
+    retry: true
   });
 
-  // 3. React Query Mutation
+  // EventSource Stream connection for pushed updates
+  useEffect(() => {
+    const eventSource = new EventSource(`${API_BASE_URL}/player/stream`);
+
+    eventSource.addEventListener("auction_update", () => {
+      queryClient.invalidateQueries({ queryKey: ['teams'] });
+      queryClient.invalidateQueries({ queryKey: ['players'] });
+    });
+
+    eventSource.onerror = () => {
+      console.warn("SSE stream dropped. Re-establishing...");
+    };
+
+    return () => {
+      eventSource.close();
+    };
+  }, [queryClient]);
+
+  // Update Player Mutation
   const updateMutation = useMutation({
     mutationFn: savePlayerUpdateToDb,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['teams'] });
       queryClient.invalidateQueries({ queryKey: ['players'] });
-      alert("Database synced and reloaded successfully!");
+      setSelectedPlayerId('');
+      setPlayerSearchText('');
+      setFinalSoldPrice('');
+      setSelectedBuyerTeam('');
+      setLoginError('');
+      alert("Database synced and broadcasted live!");
     },
     onError: (err) => {
-      alert("Error: " + err.message);
+      alert("Error saving: " + err.message);
+      if (err.message.includes("Unauthorized")) {
+        handleLogout();
+      }
     }
   });
 
-  // Local fallbacks matching the simplified schema
-  const localFallbackTeams = [
-    { id: 1, name: 'Kalaipoonga', spent: 39000, logoUrl: PB_Logo },
-    { id: 2, name: 'Vallarasu Memorial', spent: 18000, logoUrl: BG_Logo },
-    { id: 3, name: 'Top Star', spent: 16000, logoUrl: FB_Logo },
-    { id: 4, name: 'NG Boys', spent: 14000, logoUrl: Ng_Logo }
-  ];
+  // Set Nominated Player Mutation
+  const nominateMutation = useMutation({
+    mutationFn: nominateUpcomingInDb,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['players'] });
+      alert("Upcoming next player nominated successfully!");
+    },
+    onError: (err) => {
+      alert("Error: " + err.message);
+      if (err.message.includes("Unauthorized")) {
+        handleLogout();
+      }
+    }
+  });
 
-  const localFallbackPlayers = [
-    { id: 1, playerName: 'Virat Kohli', role: 'Batsman', jersey: 18, nationality: 'India', age: 37, buyerTeam: 'NG Boys', status: 'Sold', soldPrice: 24000, basePrice: 20000 },
-    { id: 2, playerName: 'Jasprit Bumrah', role: 'Bowler', jersey: 93, nationality: 'India', age: 32, buyerTeam: 'Best Friends', status: 'Sold', soldPrice: 18000, basePrice: 15000 },
-    { id: 3, playerName: 'Hardik Pandya', role: 'All-Rounder', jersey: 33, nationality: 'India', age: 32, buyerTeam: 'Pepsi Boys', status: 'Sold', soldPrice: 16000, basePrice: 12000 },
-    { id: 4, playerName: 'Quinton de Kock', role: 'Wicket-Keeper', jersey: 12, nationality: 'South Africa', age: 33, buyerTeam: 'Fire Boys', status: 'Sold', soldPrice: 14000, basePrice: 12000 },
-    { id: 5, playerName: 'Suryakumar Yadav', role: 'Batsman', jersey: 63, nationality: 'India', age: 35, buyerTeam: 'None', status: 'Unprocessed', soldPrice: 0, basePrice: 10000 },
-    { id: 6, playerName: 'Mitchell Starc', role: 'Bowler', jersey: 56, nationality: 'Australia', age: 36, buyerTeam: 'None', status: 'Unsold', soldPrice: 0, basePrice: 20000 }
-  ];
+  // Bulk CSV Upload Mutation
+  const csvUploadMutation = useMutation({
+    mutationFn: uploadCSVFileToDb,
+    onSuccess: (responseMessage) => {
+      queryClient.invalidateQueries({ queryKey: ['players'] });
+      setShowDrawer(false);
+      alert(responseMessage);
+    },
+    onError: (err) => {
+      alert("Import Failed: " + err.message);
+      if (err.message.includes("Unauthorized")) {
+        handleLogout();
+      }
+    }
+  });
 
-  const activeTeams = dbTeams.length > 0 ? dbTeams : localFallbackTeams;
-  const activePlayers = dbPlayers.length > 0 ? dbPlayers : localFallbackPlayers;
+  // auto-loads upcoming nominated player
+  useEffect(() => {
+    if (dbPlayers && dbPlayers.length > 0 && !selectedPlayerId && !playerSearchText) {
+      const currentUpcoming = dbPlayers.find(p => getStatus(p).toLowerCase() === 'upcoming');
+      if (currentUpcoming) {
+        setSelectedPlayerId(currentUpcoming.id);
+        setPlayerSearchText(currentUpcoming.playerName);
+      }
+    }
+  }, [dbPlayers, selectedPlayerId, playerSearchText]);
+
+  const handleLoginSubmit = (e) => {
+    e.preventDefault();
+    if (passwordInput.trim() === "yourSecretPassword123") {
+      sessionStorage.setItem("admin_auth_token", passwordInput.trim());
+      setAdminToken(passwordInput.trim());
+      setLoginError("");
+    } else {
+      setLoginError("Incorrect Admin Token. Access Refused.");
+    }
+  };
+
+  const handleLogout = () => {
+    sessionStorage.removeItem("admin_auth_token");
+    setAdminToken("");
+    setPasswordInput("");
+  };
+
+  const handleCSVUploadChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      csvUploadMutation.mutate({ file, token: adminToken });
+    }
+  };
+
+  if (!adminToken) {
+    return (
+      <div className="admin-login-fullscreen">
+        <div className="login-card">
+          <div className="lock-icon-container"><FaLock /></div>
+          <h2>MPL Auction Access</h2>
+          <p>Please enter your secure access token below to authorize operations.</p>
+          <form onSubmit={handleLoginSubmit}>
+            <input 
+              type="password" 
+              placeholder="Authorization Key..."
+              value={passwordInput}
+              onChange={(e) => setPasswordInput(e.target.value)}
+              required
+            />
+            {loginError && <span className="login-error-msg">{loginError}</span>}
+            <button type="submit" className="login-submit-btn">Authorize Node</button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  if (isPlayersLoading || isTeamsLoading) {
+    return (
+      <div className="admin-auction-container fallback-state">
+        <FaSpinner className="fallback-spinner" />
+        <h2>Syncing Admin Dashboard...</h2>
+        <p>Awaiting live connection stream from server...</p>
+      </div>
+    );
+  }
+
+  if (isPlayersError || isTeamsError || !dbPlayers || !dbTeams) {
+    return (
+      <div className="admin-auction-container fallback-state error-state">
+        <FaExclamationTriangle className="fallback-error-icon" />
+        <h2>Database Server Offline</h2>
+        <p>The admin database is unreachable. Retrying automatically...</p>
+      </div>
+    );
+  }
+
+  const activeTeams = dbTeams;
+  const activePlayers = dbPlayers;
 
   const totalPlayersCount = activePlayers.length;
-  const soldCount = activePlayers.filter(p => p.status === 'Sold').length;
-  const unsoldCount = activePlayers.filter(p => p.status === 'Unsold').length;
+  const soldCount = activePlayers.filter(p => getStatus(p) === 'Sold' || getStatus(p).toLowerCase() === 'retained').length;
+  const unsoldCount = activePlayers.filter(p => getStatus(p) === 'Unsold').length;
 
   const formatMoney = (value) => {
     if (value >= 100000) return `${(value / 100000)} L`;
-    if (value >= 10000) return `${(value / 1000)} K`;
+    if (value >= 1000) return `${(value / 1000)} K`;
     return `₹${value}`;
   };
 
@@ -150,17 +317,25 @@ const AdminAuction = () => {
     }
   };
 
+  const handleNominateNext = () => {
+    if (!selectedPlayerId) {
+      alert("Please select a player to nominate first.");
+      return;
+    }
+    nominateMutation.mutate({ playerId: selectedPlayerId, token: adminToken });
+  };
+
   const handleSaveUpdate = (e) => {
     e.preventDefault();
 
     if (!selectedPlayerId) {
-      alert("Please select a valid player from the dropdown list.");
+      alert("Please select a valid player first.");
       return;
     }
 
     const targetPlayer = activePlayers.find(p => p.id === Number(selectedPlayerId));
     if (!targetPlayer) {
-      alert("Player not found in database.");
+      alert("Player not found.");
       return;
     }
     
@@ -171,55 +346,30 @@ const AdminAuction = () => {
       soldPrice: auctionStatus === 'Sold' ? Number(finalSoldPrice) : 0
     };
 
-    updateMutation.mutate(payload);
-
-    // Clean reset
-    setSelectedPlayerId('');
-    setPlayerSearchText('');
-    setFinalSoldPrice('');
-    setSelectedBuyerTeam('');
+    updateMutation.mutate({ payload, token: adminToken });
   };
 
- // Filter main table search
-const filteredTablePlayers = activePlayers.filter(p => 
-  p.playerName?.toLowerCase().includes(tableSearchQuery.toLowerCase()) ||
-  p.role?.toLowerCase().includes(tableSearchQuery.toLowerCase()) ||
-  p.status?.toLowerCase().includes(tableSearchQuery.toLowerCase())
-);
-
-
-    // For security purpose
-    useEffect(() => {
-  const isAuth = sessionStorage.getItem("admin_auth");
-  if (isAuth !== "true") {
-    const password = prompt("Enter Admin Password to Access:");
-    if (password === "yourSecretPassword123") { // <-- Set your password here
-      sessionStorage.setItem("admin_auth", "true");
-    } else {
-      alert("Access Denied!");
-      window.location.href = "/"; // Redirects normal users back to home
-    }
-  }
-}, []);
-
-
+  const filteredTablePlayers = activePlayers.filter(p => 
+    p.playerName?.toLowerCase().includes(tableSearchQuery.toLowerCase()) ||
+    p.role?.toLowerCase().includes(tableSearchQuery.toLowerCase()) ||
+    getStatus(p).toLowerCase().includes(tableSearchQuery.toLowerCase())
+  );
 
   return (
     <div className="admin-auction-container">
-      {/* Header section */}
       <div className="admin-header">
         <div className="admin-branding">
           <h1>MPL Auction Panel</h1>
           <p>Update player purchase status, track budgets, and manage draft rosters</p>
         </div>
-        <div className="admin-quick-header-actions">
+        <div className="admin-quick-header-actions" style={{ display: 'flex', gap: '1rem' }}>
           <button className="header-action-btn" onClick={() => setShowDrawer(true)}>
             <FaDatabase /> Emergency Options
           </button>
+          <button className="logout-btn" onClick={handleLogout}>Lock Board</button>
         </div>
       </div>
 
-      {/* Stats Cards */}
       <div className="admin-stats-grid">
         <div className="stat-box-admin">
           <FaTrophy className="stat-admin-icon gold-glow" />
@@ -244,10 +394,8 @@ const filteredTablePlayers = activePlayers.filter(p =>
         </div>
       </div>
 
-      {/* Main split grid */}
       <div className="admin-console-grid">
         
-        {/* Left Column: Player Update Form */}
         <div className="admin-column-main">
           <div className="live-player-controller-card">
             <div className="card-header-badge">
@@ -256,10 +404,8 @@ const filteredTablePlayers = activePlayers.filter(p =>
             </div>
 
             <form onSubmit={handleSaveUpdate} className="admin-manual-update-form">
-              
-              {/* Autocomplete Input using Native HTML5 Datalist */}
               <div className="form-row">
-                <label>Select Active Player (Search 200+ list)</label>
+                <label>Select Active Player</label>
                 <div style={{ position: 'relative' }}>
                   <input 
                     type="text" 
@@ -276,18 +422,18 @@ const filteredTablePlayers = activePlayers.filter(p =>
                 <datalist id="players-datalist">
                   {activePlayers.map(p => (
                     <option key={p.id} value={p.playerName}>
-                      {p.role} ({p.status})
+                      {p.role} ({getStatus(p)})
                     </option>
                   ))}
                 </datalist>
 
                 {selectedPlayerId ? (
                   <span style={{ fontSize: '0.8rem', color: '#00E5FF', marginTop: '4px', display: 'block' }}>
-                    ✓ Match Found (ID: {selectedPlayerId})
+                    ✓ Match Found (ID: {selectedPlayerId}) {getStatus(activePlayers.find(p => p.id === selectedPlayerId)) === 'Upcoming' && " [Nominated Next]"}
                   </span>
                 ) : playerSearchText ? (
                   <span style={{ fontSize: '0.8rem', color: '#ff6b6b', marginTop: '4px', display: 'block' }}>
-                    ⚠ Keep typing or select a name from the list.
+                    ⚠ Select a valid player from the list.
                   </span>
                 ) : null}
               </div>
@@ -299,12 +445,13 @@ const filteredTablePlayers = activePlayers.filter(p =>
                   onChange={(e) => setAuctionStatus(e.target.value)}
                 >
                   <option value="Sold">SOLD</option>
+                  <option value="Retained">RETAINED</option>
                   <option value="Unsold">UNSOLD</option>
                   <option value="Unprocessed">UNPROCESSED</option>
                 </select>
               </div>
 
-              {auctionStatus === 'Sold' && (
+              {(auctionStatus === 'Sold' || auctionStatus === 'Retained') && (
                 <>
                   <div className="form-row">
                     <label>Buyer Franchise</label>
@@ -333,19 +480,43 @@ const filteredTablePlayers = activePlayers.filter(p =>
                 </>
               )}
 
-              <button 
-                type="submit" 
-                className="save-update-btn"
-                disabled={!selectedPlayerId}
-                style={{ opacity: selectedPlayerId ? 1 : 0.6, cursor: selectedPlayerId ? 'pointer' : 'not-allowed' }}
-              >
-                <FaCheckCircle /> Save & Sync Database
-              </button>
+              <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
+                <button 
+                  type="submit" 
+                  className="save-update-btn"
+                  disabled={!selectedPlayerId || updateMutation.isPending}
+                  style={{ flex: 2, opacity: selectedPlayerId ? 1 : 0.6, cursor: selectedPlayerId ? 'pointer' : 'not-allowed' }}
+                >
+                  {updateMutation.isPending ? "Syncing..." : "Save & Sync Status"}
+                </button>
+
+                <button 
+                  type="button" 
+                  onClick={handleNominateNext}
+                  className="nominate-next-btn"
+                  disabled={!selectedPlayerId || nominateMutation.isPending}
+                  style={{ 
+                    flex: 1, 
+                    opacity: selectedPlayerId ? 1 : 0.6, 
+                    cursor: selectedPlayerId ? 'pointer' : 'not-allowed',
+                    backgroundColor: '#e67e22',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '4px',
+                    fontWeight: 'bold',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem'
+                  }}
+                >
+                  {nominateMutation.isPending ? "Syncing..." : "Nominate Next"}
+                </button>
+              </div>
             </form>
           </div>
         </div>
 
-        {/* Right Column: Franchise Budget Dashboard */}
         <div className="admin-column-sidebar">
           <div className="upcoming-queue-card">
             <div className="card-header-badge">
@@ -355,7 +526,14 @@ const filteredTablePlayers = activePlayers.filter(p =>
             
             <div className="teams-vertical-budget-list">
               {activeTeams.map((team) => {
-                const teamPlayersList = activePlayers.filter(p => p.buyerTeam === team.name);
+                const teamPlayersList = activePlayers.filter(p => 
+                  p.buyerTeam && 
+                  p.buyerTeam.toLowerCase() === team.name?.toLowerCase() &&
+                  (getStatus(p).toLowerCase() === 'sold' || getStatus(p).toLowerCase() === 'retained')
+                );
+
+                const dynamicSpent = teamPlayersList.reduce((sum, p) => sum + getPrice(p), 0);
+                const remainingPurse = INITIAL_PURSE - dynamicSpent;
 
                 return (
                   <div key={team.id || team.name} className="mini-budget-card">
@@ -363,7 +541,7 @@ const filteredTablePlayers = activePlayers.filter(p =>
                       <img src={TEAMS_CONFIG[team.name]?.logo || team.logoUrl || team.logo} alt="" className="budget-team-logo" />
                       <div>
                         <h4>{team.name}</h4>
-                        <span>Spent: <strong>{formatMoney(team.spent || 0)}</strong></span>
+                        <span>Spent: <strong>{formatMoney(dynamicSpent)}</strong></span>
                       </div>
                     </div>
                     
@@ -373,7 +551,7 @@ const filteredTablePlayers = activePlayers.filter(p =>
                         <div className="mini-player-bullet-grid">
                           {teamPlayersList.map(player => (
                             <span key={player.id} className="player-bullet">
-                              • {player.playerName} <span className="mini-text">({formatMoney(player.soldPrice)})</span>
+                              • {player.playerName} {getStatus(player).toLowerCase() === 'retained' && "👑"} <span className="mini-text">({formatMoney(getPrice(player))})</span>
                             </span>
                           ))}
                         </div>
@@ -383,7 +561,7 @@ const filteredTablePlayers = activePlayers.filter(p =>
                     </div>
 
                     <div className="mini-budget-values">
-                      <span>Left: <strong className="green-accent">{formatMoney(INITIAL_PURSE - (team.spent || 0))}</strong></span>
+                      <span>Left: <strong className="green-accent">{formatMoney(remainingPurse)}</strong></span>
                     </div>
                   </div>
                 )
@@ -394,7 +572,6 @@ const filteredTablePlayers = activePlayers.filter(p =>
 
       </div>
 
-      {/* Bottom Section: Interactive Roster Table */}
       <div className="admin-team-budgets-section">
         <div className="section-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem' }}>
           <h2>All Registered Players</h2>
@@ -420,59 +597,82 @@ const filteredTablePlayers = activePlayers.filter(p =>
                   <th>Base Price</th>
                   <th>Auction Status</th>
                   <th>Buyer / Price</th>
-                  <th>Action</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredTablePlayers.map((player) => (
-                  <tr key={player.id} className={`db-row status-${player.status?.toLowerCase()}`}>
-                    <td>
-                      <strong>{player.playerName}</strong>
-                      <span className="db-nationality-span">{player.role || 'Player'} | {player.nationality || 'India'}</span>
-                    </td>
-                    <td>{formatMoney(player.basePrice)}</td>
-                    <td>
-                      <span className={`db-status-badge badge-${player.status?.toLowerCase()}`}>
-                        {player.status}
-                      </span>
-                    </td>
-                    <td>
-                      {player.status === 'Sold' ? (
-                        <div className="db-sold-info">
-                          <span className="db-buyer-abbr">{player.buyerTeam}</span>
-                          <strong className="db-sold-price">{formatMoney(player.soldPrice)}</strong>
+                {filteredTablePlayers.map((player) => {
+                  const pStatus = getStatus(player);
+                  return (
+                    <tr key={player.id} className={`db-row status-${pStatus.toLowerCase()}`}>
+                      <td>
+                        <strong>{player.playerName}</strong>
+                        <span className="db-nationality-span">{player.role || 'Player'} | {player.nationality || 'India'}</span>
+                      </td>
+                      <td>{formatMoney(player.basePrice)}</td>
+                      <td>
+                        <span className={`db-status-badge badge-${pStatus.toLowerCase()}`}>
+                          {pStatus}
+                        </span>
+                      </td>
+                      <td>
+                        {pStatus === 'Sold' ? (
+                          <div className="db-sold-info">
+                            <span className="db-buyer-abbr">{player.buyerTeam}</span>
+                            <strong className="db-sold-price">{formatMoney(getPrice(player))}</strong>
+                          </div>
+                        ) : (
+                          <span className="base-price-label">N/A</span>
+                        )}
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          <button 
+                            type="button"
+                            onClick={() => handleSelectFromTable(player)}
+                            style={{
+                              backgroundColor: selectedPlayerId === player.id ? '#00E5FF' : '#2b3b4f',
+                              color: selectedPlayerId === player.id ? '#000' : '#fff',
+                              border: 'none',
+                              padding: '6px 12px',
+                              borderRadius: '4px',
+                              cursor: 'pointer',
+                              fontWeight: 'bold',
+                              fontSize: '0.8rem'
+                            }}
+                          >
+                            {selectedPlayerId === player.id ? 'Selected' : 'Select'}
+                          </button>
+
+                          {(pStatus === 'Unprocessed' || pStatus === 'Unsold') && (
+                            <button 
+                              type="button"
+                              onClick={() => nominateMutation.mutate({ playerId: player.id, token: adminToken })}
+                              style={{
+                                backgroundColor: '#e67e22',
+                                color: '#fff',
+                                border: 'none',
+                                padding: '6px 12px',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                fontWeight: 'bold',
+                                fontSize: '0.8rem'
+                              }}
+                            >
+                              Set Next
+                            </button>
+                          )}
                         </div>
-                      ) : (
-                        <span className="base-price-label">N/A</span>
-                      )}
-                    </td>
-                    <td>
-                      <button 
-                        type="button"
-                        onClick={() => handleSelectFromTable(player)}
-                        style={{
-                          backgroundColor: selectedPlayerId === player.id ? '#00E5FF' : '#2b3b4f',
-                          color: selectedPlayerId === player.id ? '#000' : '#fff',
-                          border: 'none',
-                          padding: '6px 12px',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                          fontWeight: 'bold',
-                          fontSize: '0.8rem'
-                        }}
-                      >
-                        {selectedPlayerId === player.id ? 'Selected' : 'Select'}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
         </div>
       </div>
 
-      {/* Emergency Drawer */}
       {showDrawer && (
         <div className="emergency-overlay">
           <div className="emergency-panel-card">
@@ -492,10 +692,20 @@ const filteredTablePlayers = activePlayers.filter(p =>
               </div>
 
               <div className="emergency-action-group">
-                <h4>Upload Player Database</h4>
-                <button className="emergency-btn excel-upload-btn">
-                  <FaFileExcel /> Batch Excel Upload
-                </button>
+                <h4>Batch Player CSV Upload</h4>
+                <div className="file-upload-input-wrapper">
+                  <input 
+                    type="file" 
+                    accept=".csv" 
+                    id="csv-file-selector" 
+                    onChange={handleCSVUploadChange}
+                    style={{ display: 'none' }}
+                  />
+                  <label htmlFor="csv-file-selector" className="emergency-btn excel-upload-btn" style={{ cursor: 'pointer' }}>
+                    <FaFileExcel /> Select and Upload CSV File
+                  </label>
+                </div>
+                {csvUploadMutation.isPending && <span className="upload-loading-text">Parsing and uploading players...</span>}
               </div>
             </div>
           </div>
