@@ -32,7 +32,7 @@ const TEAMS_CONFIG = {
 }
 
 const fetchPlayersFromDb = async () => {
-  const res = await fetch("http://localhost:8080/player/all");
+  const res = await fetch("https://mpl-backend-cibq.onrender.com/player/all");
   if (!res.ok) throw new Error("Database offline");
   return res.json();
 };

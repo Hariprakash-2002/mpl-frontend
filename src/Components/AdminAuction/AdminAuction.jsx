@@ -31,19 +31,19 @@ const TEAMS_CONFIG = {
 }
 
 const fetchTeamsFromDb = async () => {
-  const res = await fetch("http://localhost:8080/team/all");
+  const res = await fetch("https://mpl-backend-cibq.onrender.com/team/all");
   if (!res.ok) throw new Error("Database offline");
   return res.json();
 };
 
 const fetchPlayersFromDb = async () => {
-  const res = await fetch("http://localhost:8080/player/all");
+  const res = await fetch("https://mpl-backend-cibq.onrender.com/player/all");
   if (!res.ok) throw new Error("Database offline");
   return res.json();
 };
 
 const savePlayerUpdateToDb = async (payload) => {
-  const res = await fetch("http://localhost:8080/player/update-player", {
+  const res = await fetch("https://mpl-backend-cibq.onrender.com/player/update-player", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
