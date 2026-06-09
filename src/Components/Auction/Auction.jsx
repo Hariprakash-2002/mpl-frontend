@@ -69,7 +69,7 @@ const TEAM_STYLE_MAP = {
 
 
 
-const API_BASE_URL = "http://localhost:8080";
+const API_BASE_URL = "https://mpl-backend-cibq.onrender.com";
 
 const fetchTeamsFromDb = async () => {
   const res = await fetch(`${API_BASE_URL}/team/all`);
