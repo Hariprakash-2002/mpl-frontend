@@ -25,7 +25,8 @@ const Upcoming = () => {
             <p>View all fixtures</p>
         </div>
         <div className="matches-list">
-            {upcomingMatches.map(match => (
+            <h1>Will be updated after auction</h1>
+            {/* {upcomingMatches.map(match => (
                 <div key={match.id} className="match-card">
                     <p>Match {match.match}</p>
                     <div className="teams">
@@ -37,7 +38,7 @@ const Upcoming = () => {
                     <p>{match.date} at {match.time}</p>
                     <p>Stadium: {match.stadium}</p>
                 </div>
-            ))}
+            ))} */}
         </div>
       
     </div>

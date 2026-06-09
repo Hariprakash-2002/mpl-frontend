@@ -65,7 +65,7 @@
         background-color: transparent;
         position: relative;
         min-height: 100vh;
-        padding-top:32vh !important;
+        padding-top:28vh !important;
         /* border: 1px solid red; */
         flex-direction: column;
         padding: 20px;
@@ -76,7 +76,7 @@
         position: static;
         /* margin-top: 400px; */
         margin-bottom: 20px;
-        /* display: none !important; */
+        display: none !important;
         max-width: 90vw;
     }
     .league-info-container{
@@ -89,7 +89,8 @@
     .all-info-container{
         position: static;
         margin-bottom: 20px;
-        display: none !important;
+        flex-direction: column;
+        /* display: none !important; */
         max-width: 90vw;
         overflow-x: hidden;
     }
@@ -105,7 +106,7 @@
         position: static;
         margin-bottom: 20px;
         /* height: 250px; */
-        /* display: none !important; */
+        display: none !important;
         max-width: 90vw;
         flex-wrap: wrap;
         flex-direction: row;

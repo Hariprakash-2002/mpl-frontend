@@ -52,7 +52,7 @@ const TEAMS_CONFIG = {
   'Fire Boys': { logo: FB_Logo },
 }
 
-const API_BASE_URL = "https://mpl-backend-cibq.onrender.com";
+const API_BASE_URL = "http://localhost:8080";
 
 const fetchTeamsFromDb = async () => {
   const res = await fetch(`${API_BASE_URL}/team/all`);

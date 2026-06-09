@@ -33,7 +33,7 @@ function App() {
           <Route path='/auction' element={<Auction />} />
           <Route path= '/gallery' element={<Gallery />} />
           <Route path='/stats' element={<Stats />} />
-          <Route path='/sponsors' element = {<AdminAuction />} />
+          <Route path='/adminauction' element = {<AdminAuction />} />
           <Route path='/createteam' element = {<CreateTeamForm />} />
         </Routes>
         </main>

@@ -95,8 +95,10 @@ const Fixtures = () => {
             <p>UPCOMING MATCHES</p>
         </div>
         <div className="all-matches-list">
-        {matches_dates.map((item, index) => (
+            <h3 className="highlight">Updated after auction</h3>
+        {/* {matches_dates.map((item, index) => (
             <div className="matches-list" key={index}>
+                
                 <div className="date-detiles">
                     <p><BsClock /> {item.time}</p>
                     <p>{item.date} {item.day}</p>
@@ -113,7 +115,7 @@ const Fixtures = () => {
                     <p>Pool A</p>
                 </div>
             </div>
-        ))}
+        ))} */}
         </div>
     </div>
   )

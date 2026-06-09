@@ -69,7 +69,7 @@ const TEAM_STYLE_MAP = {
 
 
 
-const API_BASE_URL = "https://mpl-backend-cibq.onrender.com";
+const API_BASE_URL = "http://localhost:8080";
 
 const fetchTeamsFromDb = async () => {
   const res = await fetch(`${API_BASE_URL}/team/all`);
@@ -351,7 +351,7 @@ const Auction = () => {
                     ) : pStatus === 'Upcoming' ? (
                       <span className="log-upcoming-badge">Upcoming</span>
                     ) : (
-                      <span className="log-unsold-badge">Unsold</span>
+                      <span className="log-unsold-badge">Unprocessed</span>
                     )}
                   </div>
                 </div>
@@ -522,7 +522,7 @@ const Auction = () => {
                                         <div className="drawer-stats-grid">
                                           <div><strong>Base Price:</strong> {formatPurse(player.basePrice)}</div>
                                           <div><strong>Age:</strong> {player.age} Years</div>
-                                          <div><strong>Jersey:</strong> #{player.jersey}</div>
+                                          {/* <div><strong>Jersey:</strong> #{player.jersey}</div> */}
                                         </div>
                                       </div>
                                     )}
